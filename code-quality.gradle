@@ -1,0 +1,119 @@
+buildscript {
+  repositories {
+    mavenCentral()
+  }
+}
+
+apply plugin: 'checkstyle'
+apply plugin: 'pmd'
+apply plugin: 'findbugs'
+apply plugin: 'jacoco'
+
+task deleteReports(type: Delete) {
+  delete "${buildDir}/reports"
+}
+check.dependsOn deleteReports
+checkstyleMain.mustRunAfter deleteReports
+
+task checksCopyIndexHtml << {
+  copy {
+    from file("${project.rootDir}/config/index.html")
+    into file("${project.buildDir}/reports")
+  }
+}
+check.finalizedBy checksCopyIndexHtml
+
+checkstyle {
+  configFile = new File(rootDir, "config/checkstyle/checkstyle.xml")
+  toolVersion = "7.1"
+  ignoreFailures = false
+}
+
+task checkstyleReport << {
+  if (file("$buildDir/reports/checkstyle/main.xml").exists()) {
+    ant.xslt(in: "$buildDir/reports/checkstyle/main.xml",
+    style: new File("$rootDir/config/checkstyle/xls/checkstyle-frames.xsl"),
+    out: new File("$buildDir/reports/checkstyle/main.txt")
+    )
+    println "Checkstyle rule violations were found. See the HTML report at: file://$buildDir/reports/checkstyle/index.html"
+  }
+}
+
+gradle.taskGraph.afterTask {Task task, TaskState state ->
+  if(state.failure) {
+    if (task.name in ['checkstyleMain']) {
+      checkstyleReport.execute()
+    }
+  }
+}
+
+pmd {
+  toolVersion = "5.5.1"
+  ignoreFailures = true
+  ruleSetFiles = files("${project.rootDir}/config/pmd/java-rulesets.xml")
+}
+
+tasks.withType(Pmd) {
+  reports {
+    xml.enabled = true
+    html.enabled = true
+  }
+}
+
+task checkstyleMainHtml << {
+  ant.xslt(in: checkstyleMain.reports.xml.destination,
+    style: file("${project.rootDir}/config/checkstyle/xls/checkstyle-noframes-sorted.xsl"),
+    out: new File(checkstyleMain.reports.xml.destination.parent, 'main.html'))
+}
+checkstyleMain.finalizedBy checkstyleMainHtml
+
+
+task checkstyleTestHtml << {
+  ant.xslt(in: checkstyleTest.reports.xml.destination,
+    style: file("${project.rootDir}/config/checkstyle/xls/checkstyle-noframes-sorted.xsl"),
+    out: new File(checkstyleTest.reports.xml.destination.parent, 'test.html'))
+}
+checkstyleTest.finalizedBy checkstyleTestHtml
+
+task pmdMainHtml << {
+  ant.xslt(in: pmdMain.reports.xml.destination,
+    style: file("${project.rootDir}/config/pmd/pmd-nicerhtml.xsl"),
+    out: new File(pmdMain.reports.xml.destination.parent, 'main.html'))
+}
+pmdMain.finalizedBy pmdMainHtml
+
+task pmdTestHtml << {
+    ant.xslt(in: pmdTest.reports.xml.destination,
+            style: file("${project.rootDir}/config/pmd/pmd-nicerhtml.xsl"),
+            out: new File(pmdTest.reports.xml.destination.parent, 'test.html'))
+}
+pmdTest.finalizedBy pmdTestHtml
+
+findbugs {
+  toolVersion = '3.0.1'
+  ignoreFailures = true
+  effort = 'max'
+}
+
+tasks.withType(FindBugs) {
+  reports {
+    xml.enabled = false
+    html.enabled = true
+  }
+}
+
+jacoco {
+  toolVersion = "0.7.5.201505241946"
+  //reportsDir = file("${buildDir}/reports")
+}
+
+jacocoTestReport {
+  reports {
+    xml.enabled false
+    csv.enabled false
+    html {
+      enabled true
+      destination "${buildDir}/reports/jacoco"
+    }
+  }
+}
