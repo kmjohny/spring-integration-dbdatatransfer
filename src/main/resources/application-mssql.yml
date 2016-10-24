@@ -1,0 +1,8 @@
+dataTransfer:
+  dbMetaData:
+    catalog: CDB
+
+spring:
+  datasource:
+    url: jdbc:jtds:sqlserver://BKSQ72HGP:1433/CDB
+    driver-class-name: net.sourceforge.jtds.jdbc.Driver

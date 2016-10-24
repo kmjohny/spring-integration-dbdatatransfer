@@ -1,0 +1,12 @@
+dataTransfer:
+  dbMetaData:
+    catalog: TESTDB
+
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    platform: MSSQLServer
+    schema: classpath:database/schema.sql
+    data: classpath:database/data1.sql,classpath:database/data2.sql,classpath:database/data3.sql,classpath:database/data4.sql,classpath:database/data5.sql,classpath:database/data6.sql,classpath:database/data7.sql,classpath:database/data8.sql,classpath:database/data9.sql,classpath:database/data10.sql,classpath:database/data11.sql,classpath:database/data12.sql,classpath:database/data13.sql
+    initialize: true
